@@ -1,10 +1,10 @@
 [package]
 name = "russessin"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2024"
 description = "REST API service for systemd-logind (loginctl) operations"
 license = "MIT"
-authors = ["russessin contributors"]
+authors = ["anspn"]
 
 [dependencies]
 axum = "0.8"
@@ -28,8 +28,8 @@ tower = { version = "0.5", features = ["util"] }
 http-body-util = "0.1"
 
 [package.metadata.deb]
-maintainer = "russessin contributors"
-copyright = "2026, russessin contributors"
+maintainer = "anspn"
+copyright = "2026, anspn"
 extended-description = "A REST API service that wraps systemd-logind (loginctl) operations, enabling remote session and user management over HTTP."
 depends = "$auto, libdbus-1-3"
 section = "admin"
