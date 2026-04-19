@@ -1,0 +1,27 @@
+[Unit]
+Description=Russessin - REST API for systemd-logind
+Documentation=https://github.com/russessin/russessin
+After=network.target dbus.service
+Requires=dbus.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/russessin --config /etc/russessin/russessin.toml
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=russessin
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadOnlyPaths=/etc/russessin
+# Needs access to system D-Bus
+ProtectKernelTunables=true
+ProtectControlGroups=true
+
+[Install]
+WantedBy=multi-user.target

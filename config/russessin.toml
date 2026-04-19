@@ -1,0 +1,12 @@
+# Default configuration for russessin
+# Copy to /etc/russessin/russessin.toml when deploying
+
+[server]
+# Address to bind to
+host = "127.0.0.1"
+# Port to listen on
+port = 3000
+
+[logging]
+# Log level: trace, debug, info, warn, error
+level = "info"

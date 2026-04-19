@@ -1,0 +1,742 @@
+{
+	"info": {
+		"_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+		"name": "Russessin - loginctl REST API",
+		"description": "Complete API collection for the Russessin service, which exposes Linux loginctl commands as REST endpoints.\n\n## Configuration\n\nSet the `base_url` variable to point to your running instance (default: `http://127.0.0.1:3000`).\n\nSet `session_id` and `user_uid` variables to match real values from your system (use the List Sessions / List Users requests first to discover them).\n\n## Endpoints\n\n- **Health Check** — verify the service is running\n- **Sessions** — list, show, status, activate, lock, unlock, terminate, kill\n- **Users** — list, show, status, enable/disable linger, terminate, kill",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://127.0.0.1:3000",
+			"type": "string"
+		},
+		{
+			"key": "session_id",
+			"value": "1",
+			"type": "string",
+			"description": "Session ID to use for single-session operations. Run 'List Sessions' first to find valid IDs."
+		},
+		{
+			"key": "user_uid",
+			"value": "1000",
+			"type": "string",
+			"description": "User UID to use for single-user operations. Run 'List Users' first to find valid UIDs."
+		}
+	],
+	"item": [
+		{
+			"name": "Health Check",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/healthz",
+							"host": ["{{base_url}}"],
+							"path": ["healthz"]
+						},
+						"description": "Verify that the russessin service is running and healthy.\n\nReturns `200 OK` with body `ok`."
+					},
+					"response": [
+						{
+							"name": "Healthy",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/healthz",
+									"host": ["{{base_url}}"],
+									"path": ["healthz"]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"body": "ok"
+						}
+					]
+				}
+			],
+			"description": "Service health endpoint"
+		},
+		{
+			"name": "Sessions",
+			"item": [
+				{
+					"name": "List Sessions",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response is an array', function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"});",
+									"",
+									"pm.test('Auto-set session_id from first result', function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.length > 0) {",
+									"        pm.collectionVariables.set('session_id', jsonData[0].id);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/sessions",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "sessions"]
+						},
+						"description": "List all active login sessions.\n\nEquivalent to `loginctl list-sessions`.\n\nReturns an array of session summary objects with `id`, `uid`, `user`, `seat`, and `path` fields.\n\n**Note:** The test script automatically sets the `session_id` collection variable from the first result."
+					},
+					"response": [
+						{
+							"name": "Sessions Found",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/v1/sessions",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "sessions"]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "[\n  {\n    \"id\": \"1\",\n    \"uid\": 1000,\n    \"user\": \"alice\",\n    \"seat\": \"seat0\",\n    \"path\": \"/org/freedesktop/login1/session/_31\"\n  }\n]"
+						}
+					]
+				},
+				{
+					"name": "Show Session",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has session properties', function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('uid');",
+									"    pm.expect(jsonData).to.have.property('state');",
+									"    pm.expect(jsonData).to.have.property('active');",
+									"    pm.expect(jsonData).to.have.property('type');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/sessions/{{session_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "sessions", "{{session_id}}"]
+						},
+						"description": "Show detailed properties of a specific session.\n\nEquivalent to `loginctl show-session <id>`.\n\nReturns a `SessionProperties` object with fields: `id`, `uid`, `user`, `seat`, `type`, `class`, `active`, `state`, `remote`, `remote_host`, `remote_user`, `service`, `desktop`, `scope`, `leader`, `audit`, `vt_nr`, `tty`, `display`, `timestamp`."
+					},
+					"response": [
+						{
+							"name": "Session Properties",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/v1/sessions/{{session_id}}",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "sessions", "{{session_id}}"]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n  \"id\": \"1\",\n  \"uid\": 1000,\n  \"user\": \"alice\",\n  \"seat\": \"seat0\",\n  \"type\": \"x11\",\n  \"class\": \"user\",\n  \"active\": true,\n  \"state\": \"active\",\n  \"remote\": false,\n  \"remote_host\": \"\",\n  \"remote_user\": \"\",\n  \"service\": \"gdm-password\",\n  \"desktop\": \"gnome\",\n  \"scope\": \"session-1.scope\",\n  \"leader\": 1234,\n  \"audit\": 1,\n  \"vt_nr\": 2,\n  \"tty\": \"\",\n  \"display\": \":0\",\n  \"timestamp\": 1713523200000000\n}"
+						}
+					]
+				},
+				{
+					"name": "Session Status",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has status structure', function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('properties');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/sessions/{{session_id}}/status",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "sessions", "{{session_id}}", "status"]
+						},
+						"description": "Get detailed status of a specific session.\n\nEquivalent to `loginctl session-status <id>`.\n\nReturns a `SessionStatus` object containing the session `id` and full `properties`."
+					},
+					"response": []
+				},
+				{
+					"name": "Activate Session",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 204', function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/sessions/{{session_id}}/activate",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "sessions", "{{session_id}}", "activate"]
+						},
+						"description": "Activate (bring to foreground) a specific session.\n\nEquivalent to `loginctl activate <id>`.\n\nReturns `204 No Content` on success."
+					},
+					"response": []
+				},
+				{
+					"name": "Lock Session",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 204', function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/sessions/{{session_id}}/lock",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "sessions", "{{session_id}}", "lock"]
+						},
+						"description": "Lock a specific session's screen.\n\nEquivalent to `loginctl lock-session <id>`.\n\nReturns `204 No Content` on success."
+					},
+					"response": []
+				},
+				{
+					"name": "Unlock Session",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 204', function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/sessions/{{session_id}}/unlock",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "sessions", "{{session_id}}", "unlock"]
+						},
+						"description": "Unlock a specific session's screen.\n\nEquivalent to `loginctl unlock-session <id>`.\n\nReturns `204 No Content` on success."
+					},
+					"response": []
+				},
+				{
+					"name": "Lock All Sessions",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 204', function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/sessions/lock-all",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "sessions", "lock-all"]
+						},
+						"description": "Lock the screens of all current sessions.\n\nEquivalent to `loginctl lock-sessions`.\n\nReturns `204 No Content` on success."
+					},
+					"response": []
+				},
+				{
+					"name": "Unlock All Sessions",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 204', function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/sessions/unlock-all",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "sessions", "unlock-all"]
+						},
+						"description": "Unlock the screens of all current sessions.\n\nEquivalent to `loginctl unlock-sessions`.\n\nReturns `204 No Content` on success."
+					},
+					"response": []
+				},
+				{
+					"name": "Terminate Session",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 204', function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/sessions/{{session_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "sessions", "{{session_id}}"]
+						},
+						"description": "Terminate a specific session, killing all processes in it.\n\nEquivalent to `loginctl terminate-session <id>`.\n\n⚠️ **Destructive operation** — this will end the user's session.\n\nReturns `204 No Content` on success."
+					},
+					"response": []
+				},
+				{
+					"name": "Kill Session",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 204', function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"signal\": \"SIGTERM\",\n  \"who\": \"all\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/sessions/{{session_id}}/kill",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "sessions", "{{session_id}}", "kill"]
+						},
+						"description": "Send a signal to processes in a specific session.\n\nEquivalent to `loginctl kill-session <id> --signal=<signal> --kill-who=<who>`.\n\n### Request Body\n\n| Field    | Type   | Default     | Description |\n|----------|--------|-------------|-------------|\n| `signal` | string | `\"SIGTERM\"` | Signal name (e.g. `SIGTERM`, `SIGKILL`, `TERM`, `9`) or number |\n| `who`    | string | `\"all\"`     | Which processes to signal: `\"leader\"` or `\"all\"` |\n\n⚠️ **Destructive operation** — sending `SIGKILL` cannot be caught by processes.\n\nReturns `204 No Content` on success."
+					},
+					"response": []
+				},
+				{
+					"name": "Kill Session (leader only, SIGKILL)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"signal\": \"SIGKILL\",\n  \"who\": \"leader\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/sessions/{{session_id}}/kill",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "sessions", "{{session_id}}", "kill"]
+						},
+						"description": "Kill only the session leader process with SIGKILL. Example variation of the Kill Session endpoint."
+					},
+					"response": []
+				}
+			],
+			"description": "Session management endpoints.\n\nAll single-session operations use the `{{session_id}}` collection variable. Run **List Sessions** first to discover valid session IDs."
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "List Users",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response is an array', function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"});",
+									"",
+									"pm.test('Auto-set user_uid from first result', function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.length > 0) {",
+									"        pm.collectionVariables.set('user_uid', jsonData[0].uid.toString());",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/users",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "users"]
+						},
+						"description": "List all logged-in users.\n\nEquivalent to `loginctl list-users`.\n\nReturns an array of user summary objects with `uid`, `name`, and `path` fields.\n\n**Note:** The test script automatically sets the `user_uid` collection variable from the first result."
+					},
+					"response": [
+						{
+							"name": "Users Found",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/v1/users",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "users"]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "[\n  {\n    \"uid\": 1000,\n    \"name\": \"alice\",\n    \"path\": \"/org/freedesktop/login1/user/_31000\"\n  }\n]"
+						}
+					]
+				},
+				{
+					"name": "Show User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has user properties', function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('uid');",
+									"    pm.expect(jsonData).to.have.property('name');",
+									"    pm.expect(jsonData).to.have.property('state');",
+									"    pm.expect(jsonData).to.have.property('linger');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/users/{{user_uid}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "users", "{{user_uid}}"]
+						},
+						"description": "Show detailed properties of a specific user.\n\nEquivalent to `loginctl show-user <uid>`.\n\nReturns a `UserProperties` object with fields: `uid`, `name`, `state`, `linger`, `runtime_path`, `service`, `slice`, `display`, `timestamp`, `sessions`."
+					},
+					"response": [
+						{
+							"name": "User Properties",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/v1/users/{{user_uid}}",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "users", "{{user_uid}}"]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n  \"uid\": 1000,\n  \"name\": \"alice\",\n  \"state\": \"active\",\n  \"linger\": false,\n  \"runtime_path\": \"/run/user/1000\",\n  \"service\": \"user@1000.service\",\n  \"slice\": \"user-1000.slice\",\n  \"display\": \"1\",\n  \"timestamp\": 1713523200000000,\n  \"sessions\": [\"1\", \"2\"]\n}"
+						}
+					]
+				},
+				{
+					"name": "User Status",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has status structure', function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('uid');",
+									"    pm.expect(jsonData).to.have.property('name');",
+									"    pm.expect(jsonData).to.have.property('properties');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/users/{{user_uid}}/status",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "users", "{{user_uid}}", "status"]
+						},
+						"description": "Get detailed status of a specific user.\n\nEquivalent to `loginctl user-status <uid>`.\n\nReturns a `UserStatus` object containing `uid`, `name`, and full `properties`."
+					},
+					"response": []
+				},
+				{
+					"name": "Enable Linger",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 204', function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/users/{{user_uid}}/linger",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "users", "{{user_uid}}", "linger"]
+						},
+						"description": "Enable linger for a user. Allows the user's systemd services to run even when they are not logged in.\n\nEquivalent to `loginctl enable-linger <uid>`.\n\nReturns `204 No Content` on success."
+					},
+					"response": []
+				},
+				{
+					"name": "Disable Linger",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 204', function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/users/{{user_uid}}/linger",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "users", "{{user_uid}}", "linger"]
+						},
+						"description": "Disable linger for a user. User's systemd services will stop when they log out.\n\nEquivalent to `loginctl disable-linger <uid>`.\n\nReturns `204 No Content` on success."
+					},
+					"response": []
+				},
+				{
+					"name": "Terminate User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 204', function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/users/{{user_uid}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "users", "{{user_uid}}"]
+						},
+						"description": "Terminate all sessions of a user.\n\nEquivalent to `loginctl terminate-user <uid>`.\n\n⚠️ **Destructive operation** — this will end all of the user's sessions.\n\nReturns `204 No Content` on success."
+					},
+					"response": []
+				},
+				{
+					"name": "Kill User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 204', function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"signal\": \"SIGTERM\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/users/{{user_uid}}/kill",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "users", "{{user_uid}}", "kill"]
+						},
+						"description": "Send a signal to all processes of a user.\n\nEquivalent to `loginctl kill-user <uid> --signal=<signal>`.\n\n### Request Body\n\n| Field    | Type   | Default     | Description |\n|----------|--------|-------------|-------------|\n| `signal` | string | `\"SIGTERM\"` | Signal name (e.g. `SIGTERM`, `SIGKILL`, `TERM`, `9`) or number |\n\n⚠️ **Destructive operation** — sending `SIGKILL` cannot be caught by processes.\n\nReturns `204 No Content` on success."
+					},
+					"response": []
+				},
+				{
+					"name": "Kill User (SIGKILL)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"signal\": \"SIGKILL\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/users/{{user_uid}}/kill",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "users", "{{user_uid}}", "kill"]
+						},
+						"description": "Kill all processes of a user with SIGKILL. Example variation of the Kill User endpoint."
+					},
+					"response": []
+				}
+			],
+			"description": "User management endpoints.\n\nAll single-user operations use the `{{user_uid}}` collection variable. Run **List Users** first to discover valid UIDs."
+		}
+	]
+}
